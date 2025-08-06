@@ -32,5 +32,6 @@ namespace EntropiaInventoryShareWeb.Entities
         public double? MarkupPercentage { get; set; }
 
         public double? MarkupAddToTT { get; set; }
+
     }
 }
