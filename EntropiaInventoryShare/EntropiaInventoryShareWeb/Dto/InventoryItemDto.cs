@@ -26,5 +26,12 @@
 
         public float? MarkUp { get; set; } = null!;
 
+        public bool Shared { get; set; }
+
+        public double? TTPlusValue { get; set; }
+
+        public double? MUPercent { get; set; }
+
+        public double? PricePerItem { get; set; }
     }
 }
