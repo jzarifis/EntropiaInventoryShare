@@ -4,7 +4,7 @@
 <MudStack>
     <MudTextField Validation="@(new Func<string, string>(InventoryValid))" T="string" Placeholder="Paste your items here" Variant="Variant.Outlined" DebounceInterval=500 Lines=4 TextChanged="ParseData">
     </MudTextField>
-    <MudLink Href="https://account.entropiauniverse.com/account/my-account/my-items/" Target="_blank">Open and Copy(Ctrl-A then Ctrl-C) the content from Entropia Universe Items</MudLink>
+    <MudLink hidden="@(_items.Count() > 0)" Href="https://account.entropiauniverse.com/account/my-account/my-items/" Target="_blank">Open and Copy(Ctrl-A then Ctrl-C) the content from Entropia Universe Items</MudLink>
 
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify=Justify.FlexStart Spacing="4">
         <MudPaper Class="pa-3">@($"TT Value : {_items.Sum(u => u.Value):N2}")</MudPaper>
@@ -17,7 +17,7 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify=Justify.FlexStart Spacing="4">
         <MudButton Disabled="@(_items.Count() == 0)" ButtonType="ButtonType.Button">Save Current State</MudButton>
     </MudStack>
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" @ref="tabs">
         <MudTabPanel Text="Shared">
             <MudStack>
                 <MudStack Row="true">
@@ -28,7 +28,7 @@
                     <Columns>
                         <PropertyColumn Property="x => x.Shared" Editable=true Filterable="false">
                             <CellTemplate>
-                                <MudCheckBox T=bool @bind-Value=context.Item.Shared ReadOnly=false />
+                                <MudCheckBox T=bool @bind-Value=context.Item.Shared ReadOnly=false @bind-Value:after="() => SharedItemChanged(context.Item)" />
                             </CellTemplate>
                         </PropertyColumn>
                         <PropertyColumn Property="x => x.Name" />
@@ -55,7 +55,7 @@
             </MudStack>
 
         </MudTabPanel>
-        <MudTabPanel Text="Carried/Storage">
+        <MudTabPanel Text="Carried/Storage" >
             <MudStack>
                 <MudStack Row="true">
                     <MudPaper Class="pa-3">@($"TT Value : {_items.Where(u => !u.InAuction && !u.InShop).Sum(u => u.Value):N2}")</MudPaper>
@@ -65,7 +65,7 @@
                     <Columns>
                         <PropertyColumn Property="x => x.Shared" Editable=true>
                             <CellTemplate>
-                                <MudCheckBox T=bool @bind-Value=context.Item.Shared ReadOnly=false />
+                                <MudCheckBox T=bool @bind-Value=context.Item.Shared ReadOnly=false @bind-Value:after="()=>SharedItemChanged(context.Item)" />
                             </CellTemplate>
                         </PropertyColumn>
                         <PropertyColumn Property="x => x.Name" />
@@ -101,6 +101,11 @@
                 </MudStack>
                 <MudDataGrid Dense="true" Items="@_items.Where(u => u.InShop).OrderByDescending(u => u.Value)" Filterable="true" SortMode="SortMode.None" Groupable="false" FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive">
                     <Columns>
+                        <PropertyColumn Property="x => x.Shared" Editable=true>
+                            <CellTemplate>
+                                <MudCheckBox T=bool @bind-Value=context.Item.Shared ReadOnly=false @bind-Value:after="() => SharedItemChanged(context.Item)" />
+                            </CellTemplate>
+                        </PropertyColumn>
                         <PropertyColumn Property="x => x.Name" />
                         <PropertyColumn Property="x => x.Quantity" />
                         <PropertyColumn Property="x => x.Value" Title="Value" />

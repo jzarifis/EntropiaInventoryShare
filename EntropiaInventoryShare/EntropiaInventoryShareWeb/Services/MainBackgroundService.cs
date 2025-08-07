@@ -1,6 +1,11 @@
 ﻿using EntropiaInventoryShareWeb.Db;
+using EntropiaInventoryShareWeb.Dto;
+using EntropiaInventoryShareWeb.Entities;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
+using static MudBlazor.CategoryTypes;
+using Avatar = EntropiaInventoryShareWeb.Entities.Avatar;
+using Item = EntropiaInventoryShareWeb.Entities.Item;
 
 namespace EntropiaInventoryShareWeb.Services
 {
@@ -44,7 +49,108 @@ namespace EntropiaInventoryShareWeb.Services
             }
         }
 
+        public async Task HandleItemSharedStateAsync(InventoryItemDto item, string avatar)
+        {
+            using (var scope = services.CreateScope())
+            {
+                try
+                {
+                    var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
 
+                    var dbAvatar = await dbContext.Avatars.SingleOrDefaultAsync(u => u.AvatarName == avatar);
+                    if (dbAvatar == null)
+                    {
+                        dbAvatar = new Avatar
+                        {
+                            AvatarName = avatar 
+                        };
+                        await dbContext.Avatars.AddAsync(dbAvatar);
+                        await dbContext.SaveChangesAsync();
+                    }
+
+                    var dbItem = await dbContext.Items.SingleOrDefaultAsync(u => u.Name == item.Name);
+                    if (dbItem == null)
+                    {
+                        dbItem = new Item
+                        {
+                            Name = item.Name
+                        };
+                        await dbContext.Items.AddAsync(dbItem);
+                        await dbContext.SaveChangesAsync();
+                    }
+
+                    if (string.IsNullOrEmpty(dbItem.Type)) 
+                    {
+                        await FetchFromEntropiaNexus(dbItem);
+                    }
+                    var sharedItem = await dbContext.SharedItems.SingleOrDefaultAsync(u => u.ItemId == dbItem.Id && u.AvatarId == dbAvatar.Id);
+                    if (sharedItem == null)
+                    {
+                        sharedItem = new InventorySharedItem
+                        {
+                            AvatarId = dbAvatar.Id,
+                            Container = item.Container,
+                            InAuction = item.InAuction,
+                            InShop = item.InShop,
+                            Quantity = item.Quantity,
+                            Value = item.Value,
+                            Timestamp = DateTimeOffset.UtcNow,
+                            ItemId = dbItem.Id
+                        };
+                        await dbContext.SharedItems.AddAsync(sharedItem);
+                    }
+                    if (!item.Shared)
+                    {
+                        sharedItem.Quantity = 0;
+                        sharedItem.Value = 0;
+                    }
+                    await dbContext.SaveChangesAsync(); 
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"{ex}");
+
+                }
+
+
+            }
+        }
+
+        public async Task FetchFromEntropiaNexus(Item item)
+        {
+            try
+            {
+
+                using (var scope = services.CreateScope())
+                {
+                    try
+                    {
+                        var entropiaNexusService = scope.ServiceProvider.GetService<EntropiaNexusService>();
+                        var entropiaNexusItem = await entropiaNexusService.GetGenericItemInfo(item.Name);
+                        if (entropiaNexusService != null)
+                        {
+                            item.Weight = entropiaNexusItem.Properties?.Weight;
+                            item.Value = entropiaNexusItem.Properties.Economy.Value;
+                            item.Type = entropiaNexusItem.Properties.Type;
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError($"{ex}");
+
+                    }
+
+
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"{ex}");
+            }
+        }
 
 
         public async Task StopAsync(CancellationToken cancellationToken)

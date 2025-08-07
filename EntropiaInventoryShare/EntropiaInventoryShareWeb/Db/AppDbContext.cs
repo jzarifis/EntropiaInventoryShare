@@ -10,6 +10,10 @@ namespace EntropiaInventoryShareWeb.Db
     {
         public DbSet<InventorySharedItem> SharedItems { get; set; }
 
+        public DbSet<Avatar> Avatars { get; set; }
+
+        public DbSet<Item> Items { get; set; }
+
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -22,7 +26,17 @@ namespace EntropiaInventoryShareWeb.Db
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<InventorySharedItem>()
+                .HasOne(e => e.Avatar)
+                .WithMany(e => e.SharedItems)
+                .HasForeignKey(e => e.AvatarId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<InventorySharedItem>()
+                .HasOne(e => e.Item)
+                .WithMany(e => e.SharedItems)
+                .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
     }

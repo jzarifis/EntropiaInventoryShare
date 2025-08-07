@@ -15,8 +15,11 @@ namespace EntropiaInventoryShareWeb
 
             builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Db")));
 
+            builder.Services.AddSingleton<MainBackgroundService>();
 
-            builder.Services.AddHostedService<MainBackgroundService>();
+            _ = builder.Services.AddHostedService<MainBackgroundService>(provider => provider.GetService<MainBackgroundService>()!);
+
+            builder.Services.AddHttpClient();
 
             builder.Services.AddScoped<EntropiaNexusService>();
 

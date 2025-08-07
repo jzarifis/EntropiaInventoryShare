@@ -1,7 +1,9 @@
 ﻿using EntropiaInventoryShareWeb.Dto;
+using EntropiaInventoryShareWeb.Entities;
 using EntropiaInventoryShareWeb.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
+using MudBlazor;
 using static MudBlazor.CategoryTypes;
 
 namespace EntropiaInventoryShareWeb.Components.Pages
@@ -15,6 +17,9 @@ namespace EntropiaInventoryShareWeb.Components.Pages
         private ILogger<UpdateInventory> logger { get; set; }
 
         [Inject]
+        private MainBackgroundService backgroundService { get; set; }
+
+        [Inject]
         private ParsingService parsingService { get; set; }
 
         private string avatar { get; set; }
@@ -22,6 +27,8 @@ namespace EntropiaInventoryShareWeb.Components.Pages
         private DateTimeOffset? timestamp { get; set; }
 
         private string SessionTag { get; set; }
+
+        MudTabs tabs;
 
         public async Task ParseData(string text)
         {
@@ -34,6 +41,7 @@ namespace EntropiaInventoryShareWeb.Components.Pages
             if (_items.Count() > 0)
             {
                 timestamp = DateTimeOffset.UtcNow;
+                tabs.ActivatePanel(1);
             }
             else
             {
@@ -43,7 +51,10 @@ namespace EntropiaInventoryShareWeb.Components.Pages
         }
 
 
-
+        private async Task SharedItemChanged(InventoryItemDto item)
+        {
+            await backgroundService.HandleItemSharedStateAsync(item, avatar);
+        }
 
         private string InventoryValid(string arg)
         {
@@ -52,7 +63,7 @@ namespace EntropiaInventoryShareWeb.Components.Pages
                 timestamp = null;
                 return "Cannot find any item";
             }
-                
+
             return null;
         }
     }
