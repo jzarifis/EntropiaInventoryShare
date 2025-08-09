@@ -19,7 +19,7 @@ namespace EntropiaInventoryShareWeb.Entities
 
         public double Value { get; set; }
 
-        public required string Container { get; set; }
+        public string Container { get; set; }
 
         public bool InAuction { get; set; }
 

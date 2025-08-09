@@ -1,4 +1,5 @@
 ﻿@page "/UpdateInventory"
+@page "/UpdateInventory/{LicenseNumber}"
 <PageTitle>Update Inventory</PageTitle>
 
 <MudStack>
@@ -9,14 +10,15 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify=Justify.FlexStart Spacing="4">
         <MudPaper Class="pa-3">@($"TT Value : {_items.Sum(u => u.Value):N2}")</MudPaper>
         <MudPaper Class="pa-3">@($"Items : {_items.Count()}")</MudPaper>
-        <MudTextField Disabled="@(_items.Count() == 0)" T="string" Style="width : 300px" AutoGrow=false Placeholder="Enter a tag for current state" Variant="Variant.Text" @bind-Value="SessionTag" Label="" Underline=true Dense="true"
+    </MudStack>
+    <MudStack hidden="@(string.IsNullOrEmpty(licenseAvatar))" Row="true" AlignItems="AlignItems.Start" Justify=Justify.FlexStart Spacing="4">
+
+        <MudTextField Disabled="@(_items.Count() == 0)" T="string" AutoGrow=false Placeholder="Add a description for current state" Variant="Variant.Text" @bind-Value="SessionTag" Label="" Underline=true Dense="true"
                       Margin="Margin.None">
         </MudTextField>
+        <MudButton Disabled="@(_items.Count() == 0)" >Save Current State</MudButton>
+    </MudStack>
 
-    </MudStack>
-    <MudStack Row="true" AlignItems="AlignItems.Center" Justify=Justify.FlexStart Spacing="4">
-        <MudButton Disabled="@(_items.Count() == 0)" ButtonType="ButtonType.Button">Save Current State</MudButton>
-    </MudStack>
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" @ref="tabs">
         <MudTabPanel Text="Shared">
             <MudStack>
@@ -35,19 +37,19 @@
                         <PropertyColumn Property="x => x.Quantity" />
                         <PropertyColumn Property="x => x.Value" Title="Value" />
                         <PropertyColumn Property="x => x.Container" />
-                        <PropertyColumn Property="x => x.TTPlusValue" Title="TT+ Value" Filterable="false">
+                        <PropertyColumn Property="x => x.MarkupAddToTT" Title="TT+ Value" Editable=true Filterable="false">
                             <CellTemplate>
-                                <MudNumericField T=double? @bind-Value=context.Item.TTPlusValue ReadOnly=@(context.Item.Quantity > 1 || context.Item.Name.EndsWith("L)")) />
+                                <MudNumericField T=double? Min="0" Step=1 @bind-Value=context.Item.MarkupAddToTT ReadOnly=@(context.Item.Quantity > 1 || context.Item.Name.EndsWith("L)")) @bind-Value:after="() => SharedItemValueChanged(context.Item)" />
                             </CellTemplate>
                         </PropertyColumn>
-                        <PropertyColumn Property="x => x.MUPercent" Title="MU (%)" Filterable="false">
+                        <PropertyColumn Property="x => x.MarkupPercentage" Title="MU (%)" Editable=true Filterable="false">
                             <CellTemplate>
-                                <MudNumericField T=double? Step=0.5 Min=100 Format="N2" @bind-Value=context.Item.MUPercent ReadOnly=@(context.Item.Quantity == 1 && !context.Item.Name.EndsWith("L)")) />
+                                <MudNumericField T=double? Step=0.5 Min=100 Format="N2" @bind-Value=context.Item.MarkupPercentage ReadOnly=@(context.Item.Quantity == 1 && !context.Item.Name.EndsWith("L)")) @bind-Value:after="() => SharedItemValueChanged(context.Item)" />
                             </CellTemplate>
                         </PropertyColumn>
-                        <PropertyColumn Property="x => x.PricePerItem" Title="Per Item" Filterable="false">
+                        <PropertyColumn Property="x => x.PerItemPrice" Title="Per Item" Editable=true Filterable="false">
                             <CellTemplate>
-                                <MudNumericField T=double? Min="0" Step=0.5 @bind-Value=context.Item.PricePerItem ReadOnly=@(context.Item.Quantity == 1 && !context.Item.Name.EndsWith("L)")) />
+                                <MudNumericField T=double? Min="0" Step=0.5 @bind-Value=context.Item.PerItemPrice ReadOnly=@(context.Item.Name.EndsWith("L)")) @bind-Value:after="() => SharedItemValueChanged(context.Item)" />
                             </CellTemplate>
                         </PropertyColumn>
                     </Columns>

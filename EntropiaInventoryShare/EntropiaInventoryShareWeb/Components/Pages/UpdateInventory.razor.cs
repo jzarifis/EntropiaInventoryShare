@@ -5,11 +5,15 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 using static MudBlazor.CategoryTypes;
+using Avatar = EntropiaInventoryShareWeb.Entities.Avatar;
 
 namespace EntropiaInventoryShareWeb.Components.Pages
 {
     public partial class UpdateInventory
     {
+
+        [Parameter]
+        public string LicenseNumber { get; set; }
 
         private List<InventoryItemDto> _items = new List<InventoryItemDto>();
 
@@ -30,6 +34,14 @@ namespace EntropiaInventoryShareWeb.Components.Pages
 
         MudTabs tabs;
 
+        private string? licenseAvatar { get; set; } = string.Empty;
+
+        protected override async Task OnParametersSetAsync()
+        {
+            await base.OnParametersSetAsync();
+            licenseAvatar = await backgroundService.GetAvatarFromLicense(LicenseNumber);
+        }
+
         public async Task ParseData(string text)
         {
             _items = parsingService.ParseItems(text);
@@ -41,7 +53,16 @@ namespace EntropiaInventoryShareWeb.Components.Pages
             if (_items.Count() > 0)
             {
                 timestamp = DateTimeOffset.UtcNow;
-                tabs.ActivatePanel(1);
+                await backgroundService.HandleSharedItemsAsync(_items, avatar);
+                if (_items.Exists(u => u.Shared))
+                {
+                    tabs.ActivatePanel(0);
+                }
+                else
+                {
+                    tabs.ActivatePanel(1);
+                }
+
             }
             else
             {
@@ -54,6 +75,11 @@ namespace EntropiaInventoryShareWeb.Components.Pages
         private async Task SharedItemChanged(InventoryItemDto item)
         {
             await backgroundService.HandleItemSharedStateAsync(item, avatar);
+        }
+
+        private async Task SharedItemValueChanged(InventoryItemDto item)
+        {
+            await backgroundService.HandleItemSharedValueChangedAsync(item, avatar);
         }
 
         private string InventoryValid(string arg)

@@ -18,5 +18,7 @@ namespace EntropiaInventoryShareWeb.Entities
         public required string AvatarName { get; set; }
 
         public List<InventorySharedItem> SharedItems { get; set; }
+
+        public required Guid License { get; set; }
     }
 }

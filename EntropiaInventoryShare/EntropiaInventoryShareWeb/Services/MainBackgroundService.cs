@@ -4,6 +4,7 @@ using EntropiaInventoryShareWeb.Entities;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
 using static MudBlazor.CategoryTypes;
+using static MudBlazor.Colors;
 using Avatar = EntropiaInventoryShareWeb.Entities.Avatar;
 using Item = EntropiaInventoryShareWeb.Entities.Item;
 
@@ -23,7 +24,7 @@ namespace EntropiaInventoryShareWeb.Services
 
                     logger.LogWarning($"Main Background Service is starting");
 
-                    await WaitForPostgres();
+                    //await WaitForPostgres();
 
                     logger.LogWarning($"Migrate Database Started.");
 
@@ -49,6 +50,146 @@ namespace EntropiaInventoryShareWeb.Services
             }
         }
 
+        public async Task<string?> GetAvatarFromLicense(string license)
+        {
+            if (string.IsNullOrEmpty(license))
+            {
+                return string.Empty;
+            }
+            if (!Guid.TryParse(license, out var guid))
+            {
+                return string.Empty;
+            }
+            using (var scope = services.CreateScope())
+            {
+                try
+                {
+                    var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+                    return await dbContext.Avatars.Where(u => u.License == guid).Select(u => u.AvatarName).FirstOrDefaultAsync();
+                    
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"{ex}");
+                    return string.Empty;
+                }
+
+
+            }
+        }
+
+        public async Task HandleSharedItemsAsync(List<InventoryItemDto> items, string avatar)
+        {
+            using (var scope = services.CreateScope())
+            {
+                try
+                {
+                    var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+
+                    var dbAvatar = await GetAvatar(avatar);
+
+                    var dbItems = await dbContext.SharedItems.Include(u => u.Item).Where(u => u.AvatarId == dbAvatar.Id).ToListAsync();
+                    foreach (var dbItem in dbItems)
+                    {
+                        if (string.IsNullOrEmpty(dbItem.Item.Type))
+                        {
+                            await FetchFromEntropiaNexus(dbItem.Item);
+                        }
+
+                        var item = items.FirstOrDefault(u => !u.Shared && u.InShop == u.InShop && u.Name == dbItem.Item.Name && u.Value == dbItem.Value);
+                        if (item == null)
+                        {
+                            item = items.FirstOrDefault(u => !u.Shared && u.InShop == u.InShop && u.Name == dbItem.Item.Name && u.Value == dbItem.Value);
+                        }
+                        if (item == null)
+                        {
+                            dbItem.Quantity = 0;
+                            dbItem.Value = 0;
+                        }
+                        else
+                        {
+                            dbItem.Container = item.Container;
+                            dbItem.Quantity = item.Quantity;
+                            dbItem.Value = item.Value;
+                            dbItem.Timestamp = DateTimeOffset.UtcNow;
+                            item.MarkupPercentage = dbItem.MarkupPercentage;
+                            item.MarkupAddToTT = dbItem.MarkupAddToTT;
+                            item.PerItemPrice = dbItem.PerItemPrice;
+                            item.Shared = true;
+                            item.dbId = dbItem.Id;
+                        }
+
+                    }
+
+
+                    await dbContext.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"{ex}");
+
+                }
+
+
+            }
+        }
+
+
+        private async Task<Avatar> GetAvatar(string avatar)
+        {
+            using (var scope = services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+
+                var dbAvatar = await dbContext.Avatars.SingleOrDefaultAsync(u => u.AvatarName == avatar);
+                if (dbAvatar == null)
+                {
+                    dbAvatar = new Avatar
+                    {
+                        AvatarName = avatar,
+                        License = Guid.NewGuid()
+                    };
+                    await dbContext.Avatars.AddAsync(dbAvatar);
+                    await dbContext.SaveChangesAsync();
+                }
+                return dbAvatar;
+            }
+        }
+
+
+        public async Task HandleItemSharedValueChangedAsync(InventoryItemDto item, string avatar)
+        {
+            using (var scope = services.CreateScope())
+            {
+                try
+                {
+                    var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+
+                    var dbAvatar = await GetAvatar(avatar);
+
+
+                    var sharedItem = await dbContext.SharedItems.SingleOrDefaultAsync(u => u.Id == item.dbId);
+                    if (sharedItem != null)
+                    {
+                        sharedItem.PerItemPrice = item.PerItemPrice;
+                        sharedItem.MarkupAddToTT = item.MarkupAddToTT;
+                        sharedItem.MarkupPercentage = item.MarkupPercentage;
+                        sharedItem.Timestamp = DateTimeOffset.UtcNow;
+                    }
+
+                    await dbContext.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"{ex}");
+
+                }
+
+
+            }
+        }
+
+
         public async Task HandleItemSharedStateAsync(InventoryItemDto item, string avatar)
         {
             using (var scope = services.CreateScope())
@@ -57,16 +198,7 @@ namespace EntropiaInventoryShareWeb.Services
                 {
                     var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
 
-                    var dbAvatar = await dbContext.Avatars.SingleOrDefaultAsync(u => u.AvatarName == avatar);
-                    if (dbAvatar == null)
-                    {
-                        dbAvatar = new Avatar
-                        {
-                            AvatarName = avatar 
-                        };
-                        await dbContext.Avatars.AddAsync(dbAvatar);
-                        await dbContext.SaveChangesAsync();
-                    }
+                    var dbAvatar = await GetAvatar(avatar);
 
                     var dbItem = await dbContext.Items.SingleOrDefaultAsync(u => u.Name == item.Name);
                     if (dbItem == null)
@@ -79,32 +211,43 @@ namespace EntropiaInventoryShareWeb.Services
                         await dbContext.SaveChangesAsync();
                     }
 
-                    if (string.IsNullOrEmpty(dbItem.Type)) 
+                    if (string.IsNullOrEmpty(dbItem.Type))
                     {
                         await FetchFromEntropiaNexus(dbItem);
                     }
-                    var sharedItem = await dbContext.SharedItems.SingleOrDefaultAsync(u => u.ItemId == dbItem.Id && u.AvatarId == dbAvatar.Id);
-                    if (sharedItem == null)
+                    InventorySharedItem? sharedItem;
+                    if (!item.dbId.HasValue)
                     {
                         sharedItem = new InventorySharedItem
                         {
                             AvatarId = dbAvatar.Id,
-                            Container = item.Container,
-                            InAuction = item.InAuction,
                             InShop = item.InShop,
-                            Quantity = item.Quantity,
-                            Value = item.Value,
-                            Timestamp = DateTimeOffset.UtcNow,
+
                             ItemId = dbItem.Id
                         };
                         await dbContext.SharedItems.AddAsync(sharedItem);
                     }
+                    else
+                    {
+                        sharedItem = await dbContext.SharedItems.SingleOrDefaultAsync(u => u.Id == item.dbId);
+
+                    }
+                    sharedItem!.Container = item.Container;
+                    sharedItem!.Quantity = item.Quantity;
+                    sharedItem!.Value = item.Value;
+                    sharedItem!.Timestamp = DateTimeOffset.UtcNow;
+
                     if (!item.Shared)
                     {
                         sharedItem.Quantity = 0;
                         sharedItem.Value = 0;
                     }
-                    await dbContext.SaveChangesAsync(); 
+
+                    await dbContext.SaveChangesAsync();
+                    if (item.Shared)
+                    {
+                        item.dbId = sharedItem.Id;
+                    }
                 }
                 catch (Exception ex)
                 {

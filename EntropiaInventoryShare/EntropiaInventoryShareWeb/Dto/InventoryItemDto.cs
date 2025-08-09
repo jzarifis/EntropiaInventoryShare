@@ -16,22 +16,24 @@
 
         public string Type { get; set; } = null!;
 
-        public string AmmoUsed1 { get; set; } = null!;
+        //public string AmmoUsed1 { get; set; } = null!;
 
-        public string AmmoUsed2 { get; set; } = null!;
+        //public string AmmoUsed2 { get; set; } = null!;
 
-        public float? Decay { get; set; } = null!;
+        //public float? Decay { get; set; } = null!;
 
-        public float? AmmoPerUse { get; set; } = null!;
+        //public float? AmmoPerUse { get; set; } = null!;
 
-        public float? MarkUp { get; set; } = null!;
+        //public float? MarkUp { get; set; } = null!;
 
         public bool Shared { get; set; }
 
-        public double? TTPlusValue { get; set; }
+        public double? MarkupAddToTT { get; set; }
 
-        public double? MUPercent { get; set; }
+        public double? MarkupPercentage { get; set; }
 
-        public double? PricePerItem { get; set; }
+        public double? PerItemPrice { get; set; }
+
+        public long? dbId { get; set; }
     }
 }
