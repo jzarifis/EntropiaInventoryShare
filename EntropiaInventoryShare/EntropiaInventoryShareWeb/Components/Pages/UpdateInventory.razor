@@ -52,6 +52,26 @@
                                 <MudNumericField T=double? Min="0" Step=0.5 @bind-Value=context.Item.PerItemPrice ReadOnly=@(context.Item.Name.EndsWith("L)")) @bind-Value:after="() => SharedItemValueChanged(context.Item)" />
                             </CellTemplate>
                         </PropertyColumn>
+                        <PropertyColumn Property="x => x.Tier" Title="Tier" Editable=true Filterable="false">
+                            <CellTemplate>
+                                <MudNumericField T=double? Min="1" Max="10" Step=0.01 @bind-Value=context.Item.Tier ReadOnly=@(!context.Item.HasTier) @bind-Value:after="() => SharedItemValueChanged(context.Item)" />
+                            </CellTemplate>
+                        </PropertyColumn>
+                        <PropertyColumn Property="x => x.TIR" Title="TIR" Editable=true Filterable="false">
+                            <CellTemplate>
+                                <MudNumericField T=int? Min="0" Step=1 @bind-Value=context.Item.TIR ReadOnly=@(!context.Item.HasTier) @bind-Value:after="() => SharedItemValueChanged(context.Item)" />
+                            </CellTemplate>
+                        </PropertyColumn>
+                        <PropertyColumn Property="x => x.Shop" Title="Shop" Editable=true Filterable="false">
+                            <CellTemplate>
+                                <MudTextField @bind-Value=context.Item.Shop ReadOnly=@(!context.Item.InShop) @bind-Value:after="() => SharedItemValueChanged(context.Item)" />
+                            </CellTemplate>
+                        </PropertyColumn>
+                        <PropertyColumn Property="x => x.ExtraData" Title="Info" Editable=true Filterable="false">
+                            <CellTemplate>
+                                <MudTextField @bind-Value=context.Item.ExtraData @bind-Value:after="() => SharedItemValueChanged(context.Item)" />
+                            </CellTemplate>
+                        </PropertyColumn>
                     </Columns>
                 </MudDataGrid>
             </MudStack>

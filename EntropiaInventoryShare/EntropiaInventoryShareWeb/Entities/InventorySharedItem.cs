@@ -28,8 +28,6 @@ namespace EntropiaInventoryShareWeb.Entities
         public long AvatarId { get; set; }
 
         public Avatar Avatar { get; set; }
-
-        public string? ExtraData { get; set; }
         
         public double? PerItemPrice { get; set; }
 
@@ -37,7 +35,12 @@ namespace EntropiaInventoryShareWeb.Entities
 
         public double? MarkupAddToTT { get; set; }
 
-        
+        public double? Tier { get; set; }
 
+        public int? TIR { get; set; }
+
+        public string? Shop { get; set; }
+
+        public string? ExtraData { get; set; }
     }
 }

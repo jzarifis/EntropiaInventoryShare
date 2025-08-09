@@ -1,4 +1,6 @@
-﻿namespace EntropiaInventoryShareWeb.Dto
+﻿using EntropiaInventoryShareWeb.Dto.EntropiaNexus;
+
+namespace EntropiaInventoryShareWeb.Dto
 {
     public class InventoryItemDto
     {
@@ -14,7 +16,10 @@
 
         public bool InShop => Container == "ESTATE" || Container == "PLAYER SHOP";
 
-        public string Type { get; set; } = null!;
+        public string? Type { get; set; } = null!;
+
+        public bool HasTier => Type == "Weapon" || Type == "Armor" || Type == "MedicalChip";
+
 
         //public string AmmoUsed1 { get; set; } = null!;
 
@@ -35,5 +40,13 @@
         public double? PerItemPrice { get; set; }
 
         public long? dbId { get; set; }
+
+        public double? Tier { get; set; }
+
+        public int? TIR { get; set; }
+
+        public string? Shop { get; set; }
+
+        public string? ExtraData { get; set; }
     }
 }

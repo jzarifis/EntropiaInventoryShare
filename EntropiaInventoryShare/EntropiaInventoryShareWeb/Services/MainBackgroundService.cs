@@ -116,7 +116,12 @@ namespace EntropiaInventoryShareWeb.Services
                             item.MarkupAddToTT = dbItem.MarkupAddToTT;
                             item.PerItemPrice = dbItem.PerItemPrice;
                             item.Shared = true;
+                            item.Tier = dbItem.Tier;
+                            item.TIR = dbItem.TIR;
+                            item.ExtraData = dbItem.ExtraData;
+                            item.Shop = dbItem.Shop;
                             item.dbId = dbItem.Id;
+                            item.Type = dbItem.Item?.Type;
                         }
 
                     }
@@ -174,6 +179,10 @@ namespace EntropiaInventoryShareWeb.Services
                         sharedItem.PerItemPrice = item.PerItemPrice;
                         sharedItem.MarkupAddToTT = item.MarkupAddToTT;
                         sharedItem.MarkupPercentage = item.MarkupPercentage;
+                        sharedItem.Tier = item.Tier;
+                        sharedItem.TIR = item.TIR;
+                        sharedItem.ExtraData = item.ExtraData;
+                        sharedItem.Shop = item.Shop;
                         sharedItem.Timestamp = DateTimeOffset.UtcNow;
                     }
 
@@ -242,7 +251,7 @@ namespace EntropiaInventoryShareWeb.Services
                         sharedItem.Quantity = 0;
                         sharedItem.Value = 0;
                     }
-
+                    item.Type = dbItem.Type;
                     await dbContext.SaveChangesAsync();
                     if (item.Shared)
                     {
