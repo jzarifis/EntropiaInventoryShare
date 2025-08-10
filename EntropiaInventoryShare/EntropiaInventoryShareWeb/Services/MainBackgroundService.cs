@@ -66,7 +66,7 @@ namespace EntropiaInventoryShareWeb.Services
                 {
                     var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
                     return await dbContext.Avatars.Where(u => u.License == guid).Select(u => u.AvatarName).FirstOrDefaultAsync();
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -152,10 +152,59 @@ namespace EntropiaInventoryShareWeb.Services
                     dbAvatar = new Avatar
                     {
                         AvatarName = avatar,
+                        LicenseExpiration = DateTimeOffset.UtcNow.AddMonths(1),
                         License = Guid.NewGuid()
                     };
                     await dbContext.Avatars.AddAsync(dbAvatar);
                     await dbContext.SaveChangesAsync();
+                }
+                return dbAvatar;
+            }
+        }
+
+        public async Task<Avatar> SigninAvatar(string avatar)
+        {
+            using (var scope = services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+
+                var dbAvatar = await dbContext.Avatars.SingleOrDefaultAsync(u => u.AvatarName == avatar);
+                if (dbAvatar != null)
+                {
+                    throw new Exception("This avatar already exists. Please contact Giannis Symbil Sentimenevoslakis in-game to receive your license key.");
+                }
+                if (dbAvatar == null)
+                {
+                    dbAvatar = new Avatar
+                    {
+                        AvatarName = avatar,
+                        LicenseExpiration = DateTimeOffset.UtcNow.AddMonths(1),
+                        License = Guid.NewGuid()
+                    };
+                    await dbContext.Avatars.AddAsync(dbAvatar);
+                    await dbContext.SaveChangesAsync();
+                }
+                return dbAvatar;
+            }
+        }
+        public async Task<Avatar> SigninLicense(string license)
+        {
+            if (!Guid.TryParse(license, out var licAsGuid))
+            {
+                throw new Exception("Invalid license");
+            }
+            using (var scope = services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetService<AppDbContext>();
+
+                var dbAvatar = await dbContext.Avatars.SingleOrDefaultAsync(u => u.License == licAsGuid);
+                if (dbAvatar == null)
+                {
+                    throw new Exception("Invalid license");
+                }
+                else if (dbAvatar.LicenseExpiration < DateTimeOffset.UtcNow)
+                {
+                    throw new Exception("License expired");
                 }
                 return dbAvatar;
             }

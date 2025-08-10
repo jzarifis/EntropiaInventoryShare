@@ -17,6 +17,13 @@
     <Routes @rendermode="InteractiveServer" />
     <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
     <script src="_framework/blazor.web.js"></script>
+    <script>
+                window.copyTextToClipboard = (text) => {
+            navigator.clipboard.writeText(text)
+                .then(() => console.log("Copied to clipboard"))
+                .catch(err => console.error("Failed to copy", err));
+        };
+    </script>
 </body>
 
 </html>

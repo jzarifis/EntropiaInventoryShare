@@ -2,8 +2,10 @@
 using EntropiaInventoryShareWeb.Entities;
 using EntropiaInventoryShareWeb.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
+using System.Security.Claims;
 using static MudBlazor.CategoryTypes;
 using Avatar = EntropiaInventoryShareWeb.Entities.Avatar;
 
@@ -11,9 +13,6 @@ namespace EntropiaInventoryShareWeb.Components.Pages
 {
     public partial class UpdateInventory
     {
-
-        [Parameter]
-        public string LicenseNumber { get; set; }
 
         private List<InventoryItemDto> _items = new List<InventoryItemDto>();
 
@@ -26,6 +25,11 @@ namespace EntropiaInventoryShareWeb.Components.Pages
         [Inject]
         private ParsingService parsingService { get; set; }
 
+        [Inject]
+        AuthenticationStateProvider authStateProvider { get; set; }
+
+        private ClaimsPrincipal? user;
+
         private string avatar { get; set; }
 
         private DateTimeOffset? timestamp { get; set; }
@@ -36,11 +40,13 @@ namespace EntropiaInventoryShareWeb.Components.Pages
 
         private string? licenseAvatar { get; set; } = string.Empty;
 
-        protected override async Task OnParametersSetAsync()
+
+        protected override async Task OnInitializedAsync()
         {
-            await base.OnParametersSetAsync();
-            licenseAvatar = await backgroundService.GetAvatarFromLicense(LicenseNumber);
+            var authState = await authStateProvider.GetAuthenticationStateAsync();
+            user = authState.User;
         }
+
 
         public async Task ParseData(string text)
         {
@@ -84,11 +90,19 @@ namespace EntropiaInventoryShareWeb.Components.Pages
 
         private string InventoryValid(string arg)
         {
+            if (avatar != user.Identity.Name)
+            {
+                timestamp = null;
+                _items.Clear();
+                StateHasChanged();
+                return "Pasted avatar doesn’t match your current account.";
+            }
             if (_items.Count == 0)
             {
                 timestamp = null;
                 return "Cannot find any item";
             }
+
 
             return null;
         }

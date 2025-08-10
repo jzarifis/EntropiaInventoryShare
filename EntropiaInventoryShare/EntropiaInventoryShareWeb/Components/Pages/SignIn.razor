@@ -1,0 +1,34 @@
+﻿@page "/SignIn"
+<PageTitle>Sign In</PageTitle>
+<div class="d-flex justify-center align-center pa-3">
+    <MudStack Style="width: 480px;" Spacing="4" Justify="Justify.Center" Wrap="Wrap.Wrap">
+        <MudTextField Disabled=locked T="string" Label="Paste your Avatar name to create a trial license key" Variant="Variant.Outlined" @bind-Value="@avatar" TextChanged="() => errorAvatar = string.Empty">
+        </MudTextField>
+        @if (!string.IsNullOrEmpty(errorAvatar))
+        {
+            <MudAlert Severity="Severity.Error">@errorAvatar</MudAlert>
+        }
+        <MudButton Disabled=locked OnClick="SignInAvatar">Assign license key</MudButton>
+
+        <MudText Align="Align.Center">OR</MudText>
+
+        <MudTextField ReadOnly=locked T="string" Label="Paste your license key" Variant="Variant.Text" @bind-Value="@license" TextChanged="() => errorLicense = string.Empty"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.ContentCopy"
+                      OnAdornmentClick="@(() => { if (locked) CopyKey(); })"
+                      AdornmentColor="@(!locked ? Color.Transparent : Color.Primary)">
+        </MudTextField>
+        @if (!string.IsNullOrEmpty(errorLicense))
+        {
+            <MudAlert Severity="Severity.Error">@errorLicense</MudAlert>
+        }
+        else if (!string.IsNullOrEmpty(license) && locked)
+        {
+            <MudAlert Severity="Severity.Success">Copy this and keep it safe — you’ll need it to access your account on other devices or to sign back in after logging out.</MudAlert>
+        }
+        <MudButton Disabled=@(string.IsNullOrEmpty(license) && !string.IsNullOrEmpty(errorLicense)) OnClick="SignInLicense"
+        >SignIn</MudButton>
+
+
+    </MudStack>
+</div>

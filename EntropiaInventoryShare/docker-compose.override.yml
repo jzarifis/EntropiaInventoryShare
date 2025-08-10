@@ -3,6 +3,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=5000
+      - DP_KEYS_PATH=/app/dpkeys
     ports:
       - "5000"
     volumes:

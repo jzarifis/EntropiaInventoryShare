@@ -10,8 +10,48 @@
 <MudSnackbarProvider />
 <MudLayout>
     <MudAppBar>
-        <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" Match="NavLinkMatch.All" >Entropia Inventory Share</MudNavLink>
-        <MudNavLink Href="/UpdateInventory" Match="NavLinkMatch.Prefix">Update Inventory</MudNavLink>
+        <MudIconButton Href="/" Icon="@Icons.Material.Filled.Home"></MudIconButton>
+        <AuthorizeView>
+            <Authorized>
+                Entropia Inventory Share - @user.Identity.Name
+            </Authorized>
+            <NotAuthorized>
+                Entropia Inventory Share
+            </NotAuthorized>
+
+        </AuthorizeView>
+        <MudSpacer />
+        <MudMenu Dense
+                 Variant="Variant.Text"
+                 Size="Size.Medium"
+                 Color="Color.Inherit"
+                 Icon="@Icons.Material.TwoTone.MoreVert">
+            <AuthorizeView>
+                <Authorized>
+                    <MudMenuItem Href="/UpdateInventory"
+                                 Icon="@Icons.Material.Filled.Inventory"
+                                 Label="Upload Inventory" />
+                    <MudDivider />
+                    <MudMenuItem Href="/logout"
+                                 Icon="@Icons.Material.TwoTone.Logout"
+                                 IconColor="Color.Primary"
+                                 Label="Sign Out" />
+
+
+
+                </Authorized>
+                <NotAuthorized>
+                    <MudMenuItem Href="/SignIn"
+                                 Icon="@Icons.Material.TwoTone.Login"
+                                 IconColor="Color.Primary"
+                                 Label="Sign In" />
+                </NotAuthorized>
+
+            </AuthorizeView>
+
+
+
+        </MudMenu>
 
     </MudAppBar>
     <MudMainContent Style="padding-left: 10px;padding-right: 10px;">
